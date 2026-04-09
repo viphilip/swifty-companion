@@ -1,98 +1,208 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { ThemedText } from "@/components/themed-text";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import {
+  FortyTwoApiError,
+  type FortyTwoUser,
+  getUserByLogin,
+} from "@/services/oauth";
+import { Radius, Spacing, useGlobalStyles } from "@/styles";
 
-export default function HomeScreen() {
+function mapErrorToMessage(error: unknown) {
+  if (error instanceof FortyTwoApiError) {
+    if (error.code === "USER_NOT_FOUND") return "Login introuvable";
+    if (error.code === "NETWORK_ERROR")
+      return "Erreur reseau, verifie ta connexion";
+    if (error.code === "CONFIG_ERROR")
+      return "Configuration API manquante dans .env.local";
+    if (error.code === "AUTH_ERROR")
+      return "Impossible d'obtenir le token OAuth";
+    return "Erreur API, reessaie dans un instant";
+  }
+  return "Une erreur inattendue est survenue";
+}
+
+function getDisplayedLevel(user: FortyTwoUser) {
+  const mainCursus =
+    user.cursus_users.find((cursus) => cursus.cursus_id === 21) ??
+    user.cursus_users[0];
+  return typeof mainCursus?.level === "number"
+    ? mainCursus.level.toFixed(2)
+    : "N/A";
+}
+
+export default function SearchScreen() {
+  const [login, setLogin] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [user, setUser] = useState<FortyTwoUser | null>(null);
+
+  const theme = useColorScheme() ?? "light";
+  const palette = Colors[theme];
+  const g = useGlobalStyles();
+  const canSearch = login.trim().length > 0 && !isLoading;
+
+  async function handleSearch() {
+    if (!canSearch) return;
+
+    Keyboard.dismiss();
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const result = await getUserByLogin(login);
+      setUser(result);
+    } catch (error) {
+      setUser(null);
+      setErrorMessage(mapErrorToMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
+    <SafeAreaView style={g.screen} edges={["top"]}>
+      <View style={styles.headerBlock}>
+        <ThemedText type="title">Swifty Companion</ThemedText>
+        <ThemedText style={{ color: palette.textSecondary }}>
+          Recherche un etudiant 42 par son login
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={[g.glassCardElevated, styles.searchCard]}>
+        <View style={styles.searchRow}>
+          <TextInput
+            value={login}
+            onChangeText={setLogin}
+            placeholder="ex: ton login 42"
+            placeholderTextColor={palette.inputPlaceholder}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+            onSubmitEditing={handleSearch}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
+            style={[
+              g.glassInput,
+              styles.input,
+              isInputFocused ? g.glassInputFocused : undefined,
+            ]}
+          />
+          <Pressable
+            onPress={handleSearch}
+            disabled={!canSearch}
+            style={({ pressed }) => [
+              g.glassButtonPrimary,
+              styles.searchButton,
+              pressed && canSearch ? g.glassButtonPrimaryPressed : undefined,
+              !canSearch ? styles.searchButtonDisabled : undefined,
+            ]}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={palette.primary} />
+            ) : (
+              <IconSymbol
+                name="magnifyingglass"
+                size={18}
+                color={palette.text}
+              />
+            )}
+          </Pressable>
+        </View>
+      </View>
+
+      {errorMessage ? (
+        <View style={[g.glassCard, styles.errorCard]}>
+          <ThemedText style={{ color: "#dc2626" }}>{errorMessage}</ThemedText>
+        </View>
+      ) : null}
+
+      {user ? (
+        <View style={[g.glassCard, styles.previewCard]}>
+          <ThemedText type="subtitle">Preview profil</ThemedText>
+          <View style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>Login</ThemedText>
+            <ThemedText type="defaultSemiBold">{user.login}</ThemedText>
+          </View>
+          <View style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>Email</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              {user.email || "N/A"}
+            </ThemedText>
+          </View>
+          <View style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>Wallet</ThemedText>
+            <ThemedText type="defaultSemiBold">{user.wallet}</ThemedText>
+          </View>
+          <View style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>Location</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              {user.location ?? "Unavailable"}
+            </ThemedText>
+          </View>
+          <View style={styles.infoRow}>
+            <ThemedText style={styles.infoLabel}>Level</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              {getDisplayedLevel(user)}
+            </ThemedText>
+          </View>
+        </View>
+      ) : null}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  headerBlock: {
+    gap: Spacing.xs,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  searchCard: {
+    gap: Spacing.md,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  input: {
+    flex: 1,
+    borderRadius: Radius.lg,
+  },
+  searchButton: {
+    minWidth: 52,
+    width: 52,
+    borderRadius: Radius.lg,
+    paddingHorizontal: 0,
+  },
+  searchButtonDisabled: {
+    opacity: 0.45,
+  },
+  errorCard: {
+    borderColor: "rgba(220, 38, 38, 0.25)",
+  },
+  previewCard: {
+    gap: Spacing.sm,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  infoLabel: {
+    opacity: 0.75,
   },
 });
