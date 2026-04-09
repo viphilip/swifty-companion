@@ -50,6 +50,7 @@ export function createGlobalStyles(theme: AppThemeName) {
       borderWidth: 1,
       borderRadius: Radius.md,
       paddingHorizontal: Spacing.md,
+      letterSpacing: -0.8,
       color: palette.text,
     },
     glassInputFocused: {

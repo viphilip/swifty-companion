@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -6,51 +6,44 @@ import {
   StyleSheet,
   TextInput,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ThemedText } from "@/components/themed-text";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import {
-  FortyTwoApiError,
-  type FortyTwoUser,
-  getUserByLogin,
-} from "@/services/oauth";
-import { Radius, Spacing, useGlobalStyles } from "@/styles";
+import { ThemedText } from '@/components/themed-text';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FortyTwoApiError, type FortyTwoUser, getUserByLogin } from '@/services/oauth';
+import { Radius, Spacing, useGlobalStyles } from '@/styles';
 
 function mapErrorToMessage(error: unknown) {
   if (error instanceof FortyTwoApiError) {
-    if (error.code === "USER_NOT_FOUND") return "Login introuvable";
-    if (error.code === "NETWORK_ERROR")
-      return "Erreur reseau, verifie ta connexion";
-    if (error.code === "CONFIG_ERROR")
-      return "Configuration API manquante dans .env.local";
-    if (error.code === "AUTH_ERROR")
-      return "Impossible d'obtenir le token OAuth";
-    return "Erreur API, reessaie dans un instant";
+    if (error.code === 'USER_NOT_FOUND') return 'Login introuvable';
+    if (error.code === 'NETWORK_ERROR') return 'Erreur reseau, verifie ta connexion';
+    if (error.code === 'CONFIG_ERROR') return 'Configuration API manquante dans .env.local';
+    if (error.code === 'AUTH_ERROR') return "Impossible d'obtenir le token OAuth";
+    return 'Erreur API, reessaie dans un instant';
   }
-  return "Une erreur inattendue est survenue";
+  return 'Une erreur inattendue est survenue';
 }
 
 function getDisplayedLevel(user: FortyTwoUser) {
   const mainCursus =
-    user.cursus_users.find((cursus) => cursus.cursus_id === 21) ??
-    user.cursus_users[0];
-  return typeof mainCursus?.level === "number"
-    ? mainCursus.level.toFixed(2)
-    : "N/A";
+    user.cursus_users.find((cursus) => cursus.cursus_id === 21) ?? user.cursus_users[0];
+
+  return typeof mainCursus?.level === 'number' ? mainCursus.level.toFixed(2) : 'N/A';
 }
 
 export default function SearchScreen() {
-  const [login, setLogin] = useState("");
+  const [login, setLogin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [user, setUser] = useState<FortyTwoUser | null>(null);
+  const [previewUser, setPreviewUser] = useState<FortyTwoUser | null>(null);
 
-  const theme = useColorScheme() ?? "light";
+  const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
   const palette = Colors[theme];
   const g = useGlobalStyles();
   const canSearch = login.trim().length > 0 && !isLoading;
@@ -64,9 +57,9 @@ export default function SearchScreen() {
 
     try {
       const result = await getUserByLogin(login);
-      setUser(result);
+      setPreviewUser(result);
     } catch (error) {
-      setUser(null);
+      setPreviewUser(null);
       setErrorMessage(mapErrorToMessage(error));
     } finally {
       setIsLoading(false);
@@ -74,9 +67,11 @@ export default function SearchScreen() {
   }
 
   return (
-    <SafeAreaView style={g.screen} edges={["top"]}>
+    <SafeAreaView style={g.screen} edges={['top']}>
       <View style={styles.headerBlock}>
-        <ThemedText type="title">Swifty Companion</ThemedText>
+        <ThemedText type="title" style={styles.appTitle}>
+          Swifty Companion
+        </ThemedText>
         <ThemedText style={{ color: palette.textSecondary }}>
           Recherche un etudiant 42 par son login
         </ThemedText>
@@ -126,40 +121,68 @@ export default function SearchScreen() {
 
       {errorMessage ? (
         <View style={[g.glassCard, styles.errorCard]}>
-          <ThemedText style={{ color: "#dc2626" }}>{errorMessage}</ThemedText>
+          <ThemedText style={{ color: '#dc2626' }}>{errorMessage}</ThemedText>
         </View>
       ) : null}
 
-      {user ? (
-        <View style={[g.glassCard, styles.previewCard]}>
-          <ThemedText type="subtitle">Preview profil</ThemedText>
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Login</ThemedText>
-            <ThemedText type="defaultSemiBold">{user.login}</ThemedText>
+      {previewUser ? (
+        <Pressable
+          onPress={() => {
+            router.push({
+              pathname: '/profile',
+              params: { login: previewUser.login },
+            });
+          }}
+          style={({ pressed }) => [
+            g.glassCard,
+            styles.previewCard,
+            {
+              borderWidth: 1,
+              borderColor: palette.borderGlassStrong,
+              shadowColor: palette.primary,
+              shadowOpacity: 0.18,
+              shadowRadius: 14,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 0,
+            },
+            pressed ? styles.previewCardPressed : undefined,
+          ]}>
+          <View style={styles.previewHeader}>
+            <View style={styles.previewTitleRow}>
+              <ThemedText type="subtitle">Preview</ThemedText>
+            </View>
+            <IconSymbol name="chevron.right" size={20} color={palette.primary} />
           </View>
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Email</ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {user.email || "N/A"}
-            </ThemedText>
+
+          <View style={[styles.previewRow, styles.previewRowWithBorder]}>
+            <View style={styles.previewLabelBlock}>
+              <IconSymbol name="person.fill" size={15} color={palette.icon} />
+              <ThemedText style={styles.previewLabel}>login</ThemedText>
+            </View>
+            <ThemedText type="defaultSemiBold">{previewUser.login}</ThemedText>
           </View>
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Wallet</ThemedText>
-            <ThemedText type="defaultSemiBold">{user.wallet}</ThemedText>
+          <View style={[styles.previewRow, styles.previewRowWithBorder]}>
+            <View style={styles.previewLabelBlock}>
+              <IconSymbol name="envelope.fill" size={15} color={palette.icon} />
+              <ThemedText style={styles.previewLabel}>email</ThemedText>
+            </View>
+            <ThemedText type="defaultSemiBold">{previewUser.email || 'N/A'}</ThemedText>
           </View>
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Location</ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {user.location ?? "Unavailable"}
-            </ThemedText>
+          <View style={[styles.previewRow, styles.previewRowWithBorder]}>
+            <View style={styles.previewLabelBlock}>
+              <ThemedText style={[styles.moneySymbol, { color: palette.icon }]}>₳</ThemedText>
+              <ThemedText style={styles.previewLabel}>wallet</ThemedText>
+            </View>
+            <ThemedText type="defaultSemiBold">{previewUser.wallet}</ThemedText>
           </View>
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.infoLabel}>Level</ThemedText>
-            <ThemedText type="defaultSemiBold">
-              {getDisplayedLevel(user)}
-            </ThemedText>
+          <View style={[styles.previewRow, styles.previewRowWithBorder]}>
+            <View style={styles.previewLabelBlock}>
+              <IconSymbol name="chart.bar.fill" size={15} color={palette.icon} />
+              <ThemedText style={styles.previewLabel}>level</ThemedText>
+            </View>
+            <ThemedText type="defaultSemiBold">{getDisplayedLevel(previewUser)}</ThemedText>
           </View>
-        </View>
+        </Pressable>
       ) : null}
     </SafeAreaView>
   );
@@ -169,12 +192,16 @@ const styles = StyleSheet.create({
   headerBlock: {
     gap: Spacing.xs,
   },
+  appTitle: {
+    fontWeight: '800',
+    letterSpacing: -0.8,
+  },
   searchCard: {
     gap: Spacing.md,
   },
   searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.sm,
   },
   input: {
@@ -190,19 +217,65 @@ const styles = StyleSheet.create({
   searchButtonDisabled: {
     opacity: 0.45,
   },
+  infoCard: {
+    borderRadius: Radius.lg,
+  },
   errorCard: {
-    borderColor: "rgba(220, 38, 38, 0.25)",
+    borderColor: 'rgba(220, 38, 38, 0.25)',
   },
   previewCard: {
     gap: Spacing.sm,
+    borderRadius: Radius.xl,
   },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  previewCardPressed: {
+    opacity: 0.96,
+    transform: [{ scale: 0.995 }],
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  previewTitleRow: {
+    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    flex: 1,
+  },
+  tapHintBadge: {
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+  },
+  tapHintText: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '600',
+  },
+  previewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.sm,
+    minHeight: 34,
   },
-  infoLabel: {
-    opacity: 0.75,
+  previewRowWithBorder: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(125, 211, 252, 0.12)',
+    paddingTop: Spacing.xs,
+  },
+  previewLabel: {
+    opacity: 0.72,
+  },
+  moneySymbol: {
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  previewLabelBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 });

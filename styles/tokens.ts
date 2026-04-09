@@ -87,8 +87,10 @@ export const Typography = {
     title: 38,
   },
   letterSpacing: {
-    body: 0,
-    title: 0.2,
+    body: -0.8,
+    subtitle: -0.8,
+    title: -0.8,
+    link: -0.8,
   },
 } as const;
 

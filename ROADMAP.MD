@@ -1,9 +1,8 @@
-
 # 🗺️ Roadmap : Swifty Companion (React Native / Expo)
 
 ## 📍 Milestone 1 : Initialisation et Configuration (Setup)
 
-*L'objectif est d'avoir une base de projet saine, typée, et sécurisée.*
+_L'objectif est d'avoir une base de projet saine, typée, et sécurisée._
 
 - **Créer l'application sur l'Intranet 42** :
   - Aller sur l'intra 42 -> Settings -> API -> Register a new app.
@@ -19,7 +18,7 @@
 
 ## 📍 Milestone 2 : Authentification OAuth2 & Service API (Cœur logique)
 
-*L'objectif est de communiquer avec l'API 42 sans recréer un token à chaque requête et de gérer le bonus.*
+_L'objectif est de communiquer avec l'API 42 sans recréer un token à chaque requête et de gérer le bonus._
 
 - **Créer un service API (`src/services/api.ts`)** :
   - Mettre en place une classe ou un module pour gérer les appels à `https://api.intra.42.fr`.
@@ -34,7 +33,7 @@
 
 ## 📍 Milestone 3 : Navigation et Squelette des Vues
 
-*L'objectif est de respecter la contrainte des "au moins 2 vues" et du retour en arrière.*
+_L'objectif est de respecter la contrainte des "au moins 2 vues" et du retour en arrière._
 
 - **Créer la Vue 1 : `SearchScreen`** :
   - Utiliser ton fichier app/index.tsx (la page d'accueil) pour y mettre ta barre de recherche
@@ -45,7 +44,7 @@
 
 ## 📍 Milestone 4 : Vue 1 - Recherche et Gestion des Erreurs
 
-*L'objectif est de gérer la saisie et tous les cas d'erreurs demandés par le sujet.*
+_L'objectif est de gérer la saisie et tous les cas d'erreurs demandés par le sujet._
 
 - **UI de la barre de recherche** :
   - Un `TextInput` stylisé (Flexbox) et un bouton de validation.
@@ -60,23 +59,26 @@
 
 ## 📍 Milestone 5 : Vue 2 - Affichage du Profil (Data Parsing)
 
-*L'objectif est d'afficher toutes les informations requises de manière claire.*
+_L'objectif est d'afficher toutes les informations requises de manière claire._
+
+> Plan detaille de dev: `docs/UXUI/VIEW2-DEV-PLAN.MD`
 
 - **En-tête du profil (Header)** :
   - Afficher la **photo de profil** (`image.versions.large` ou `image.link`).
   - Afficher les **4 détails minimum** (ex: `login`, `email`, `phone`, `wallet`, `correction_point`, `location` si présent).
 - **Section Compétences (Skills)** :
   - Récupérer le tableau `cursus_users[x].skills` (attention à bien filtrer le cursus principal, souvent `cursus_id: 21` pour 42).
-  - Afficher le nom de la compétence, le niveau (ex: `Level 12.42`) et une **barre de progression** (`%`).
+  - Afficher les skills dans un **radar chart** (tous les skills disponibles dans le cursus principal).
+  - Afficher le nom de la compétence, le niveau (ex: `Level 12.42`) et un **pourcentage** (`%`) dans la liste detaillee.
 - **Section Projets (Projects)** :
   - Récupérer le tableau `projects_users`.
-  - Filtrer les projets pour ne garder que ceux du cursus principal.
+  - Regrouper les projets par `cursus_id` / `cursus_ids` avec un titre de section par cursus.
   - Afficher le nom du projet, le statut (`finished`, `failed`, `in_progress`) et la note (`final_mark`).
-  - *Astuce UI : Mettre la note en vert si validé, en rouge si échoué.*
+  - _Astuce UI : Mettre la note en vert si validé, en rouge si échoué._
 
 ## 📍 Milestone 6 : Layout Flexible et Design (UI/UX)
 
-*L'objectif est de respecter la contrainte de "flexible or modern layout technique".*
+_L'objectif est de respecter la contrainte de "flexible or modern layout technique"._
 
 - **Utilisation de Flexbox** :
   - S'assurer que l'application utilise `flex: 1`, `justifyContent`, `alignItems` pour s'adapter aux petits et grands écrans.
@@ -89,7 +91,7 @@
 
 ## 📍 Milestone 7 : Tests finaux et Préparation à la soutenance
 
-*Vérification stricte de la grille de correction.*
+_Vérification stricte de la grille de correction._
 
 - Vérifier que le `.env` n'est **PAS** sur le repo Git (`git status` / `git ls-files`).
 - Tester avec un login valide (ex: `norminet`, ou le tien).
