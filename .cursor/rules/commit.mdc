@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+---
+## Format des commits (Conventional Commits)
+
+```
+<type>(<scope>): <description en français>
+```
+
+### 🇫🇷 Langue : Français
+
+**Les messages de commit doivent être rédigés en français.**
+
+- Header en minuscule
+- Body en liste
+- Pas de point final
+- Verbe à l'infinitif de préférence
+
+### Types disponibles
+
+| Type | Usage |
+|------|-------|
+| `feat` | Nouvelle fonctionnalité |
+| `fix` | Correction de bug |
+| `docs` | Documentation |
+| `style` | Formatage (pas de logique) |
+| `refactor` | Refactoring |
+| `test` | Tests |
+| `chore` | Maintenance |
+
+### Scopes disponibles
+
+Services : `api-gateway`, `auth`, `companies`, `ago-workflow`, `uploads`, `payments`, `signatures`, `filing`, `analysis`, `documents`, `mailing`, `options`, `official-data`
+
+Autres : `frontend`, `infra`, `deps`, `config`, `docs`
+
+### Exemples
+
+```bash
+# ✅ Valides
+git commit -m "feat(auth): ajout de l'authentification OTP"
+git commit -m "fix(companies): correction de la validation SIREN"
+git commit -m "docs: mise à jour du README"
+git commit -m "chore(deps): mise à jour de mongoose"
+git commit -m "feat(infra): mise en place de l'infrastructure monorepo"
+
+# ❌ Invalides
+git commit -m "fixed stuff"           # Pas de type + anglais
+git commit -m "feat: Ajout Feature"   # Majuscule au milieu
+git commit -m "feat(auth): add login" # Anglais
+```
+
+---
