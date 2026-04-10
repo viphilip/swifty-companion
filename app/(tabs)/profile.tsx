@@ -3,8 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { RadarChart, type RadarDataPoint } from '@/components/charts/radar-chart';
 import { ProfileHeaderSection } from '@/components/profile/profile-header-section';
+import { ProfileSkillsSection } from '@/components/profile/profile-skills-section';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
@@ -49,8 +49,6 @@ interface ProjectGroup {
   };
   projects: ProjectItem[];
 }
-
-const SKILL_LEVEL_REFERENCE_MAX = 21;
 
 function mapErrorToMessage(error: unknown) {
   if (error instanceof FortyTwoApiError) {
@@ -115,16 +113,6 @@ function getValidatedFlag(project: FortyTwoProjectUser) {
   if (typeof fallbackValidated === 'boolean' || fallbackValidated === null) return fallbackValidated;
 
   return null;
-}
-
-function buildRadarData(skills: FortyTwoSkill[]): RadarDataPoint[] {
-  const sortedSkills = [...skills].sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
-
-  return sortedSkills.map((skill) => ({
-    label: skill.name,
-    value: skill.level,
-    percent: Math.min(100, Math.max(0, (skill.level / SKILL_LEVEL_REFERENCE_MAX) * 100)),
-  }));
 }
 
 function buildProjectGroups(
@@ -256,7 +244,6 @@ export default function ProfileScreen() {
 
   const cursusMap = useMemo(() => buildCursusMap(user?.cursus_users ?? []), [user]);
   const mainCursus = useMemo(() => selectMainCursus(cursusMap), [cursusMap]);
-  const radarData = useMemo(() => buildRadarData(mainCursus?.skills ?? []), [mainCursus]);
   const projectGroups = useMemo(
     () => (user ? buildProjectGroups(user, cursusMap, mainCursus?.id ?? null) : []),
     [user, cursusMap, mainCursus]
@@ -325,37 +312,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}>
         <ProfileHeaderSection user={user} mainCursusLevel={mainCursus?.level} />
 
-        <View style={[g.glassCard, styles.sectionCard]}>
-          <ThemedText type="subtitle">Skills</ThemedText>
-          <ThemedText style={{ color: palette.textSecondary }}>
-            {mainCursus
-              ? `${mainCursus.name} - ${radarData.length} skills - max ref lv ${SKILL_LEVEL_REFERENCE_MAX}`
-              : 'No skills found'}
-          </ThemedText>
-
-          {radarData.length >= 3 ? (
-            <View style={styles.chartContainer}>
-              <RadarChart data={radarData} />
-            </View>
-          ) : (
-            <View style={styles.emptyCard}>
-              <ThemedText style={{ color: palette.textSecondary }}>
-                Not enough skills to display a radar
-              </ThemedText>
-            </View>
-          )}
-
-          <View style={styles.skillsList}>
-            {radarData.map((skill) => (
-              <View key={skill.label} style={styles.skillRow}>
-                <ThemedText style={styles.skillName}>{skill.label}</ThemedText>
-                <ThemedText type="defaultSemiBold">
-                  Lv {skill.value.toFixed(2)} - {skill.percent.toFixed(0)}%
-                </ThemedText>
-              </View>
-            ))}
-          </View>
-        </View>
+        <ProfileSkillsSection cursusName={mainCursus?.name} skills={mainCursus?.skills ?? []} />
 
         <View style={styles.projectsSection}>
           <ThemedText type="subtitle">Projects by cursus</ThemedText>
@@ -463,28 +420,6 @@ const styles = StyleSheet.create({
   },
   emptyStateCard: {
     gap: Spacing.sm,
-  },
-  sectionCard: {
-    gap: Spacing.md,
-  },
-  chartContainer: {
-    alignItems: 'center',
-  },
-  emptyCard: {
-    paddingVertical: Spacing.md,
-  },
-  skillsList: {
-    gap: 8,
-  },
-  skillRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  skillName: {
-    flex: 1,
-    opacity: 0.9,
   },
   projectsSection: {
     gap: Spacing.sm,
