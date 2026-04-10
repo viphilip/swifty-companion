@@ -215,7 +215,7 @@ export function ProfileProjectsSection({
 
   return (
     <View style={styles.projectsSection}>
-      <ThemedText type="subtitle">Projects by cursus</ThemedText>
+      <ThemedText type="subtitle">Projects</ThemedText>
 
       {projectGroups.map((group) => {
         const groupKey = String(group.cursusId);
