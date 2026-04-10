@@ -11,7 +11,6 @@ import { Spacing, useGlobalStyles } from '@/styles';
 const SKILL_LEVEL_REFERENCE_MAX = 21;
 
 interface ProfileSkillsSectionProps {
-  cursusName?: string | null;
   skills: FortyTwoSkill[];
 }
 
@@ -25,7 +24,7 @@ function buildRadarData(skills: FortyTwoSkill[]): RadarDataPoint[] {
   }));
 }
 
-export function ProfileSkillsSection({ cursusName, skills }: ProfileSkillsSectionProps) {
+export function ProfileSkillsSection({ skills }: ProfileSkillsSectionProps) {
   const theme = useColorScheme() ?? 'light';
   const palette = Colors[theme];
   const g = useGlobalStyles();
@@ -34,12 +33,6 @@ export function ProfileSkillsSection({ cursusName, skills }: ProfileSkillsSectio
   return (
     <View style={[g.glassCard, styles.sectionCard]}>
       <ThemedText type="subtitle">Skills</ThemedText>
-      <ThemedText style={{ color: palette.textSecondary }}>
-        {cursusName
-          ? `${cursusName} - ${radarData.length} skills - max ref lv ${SKILL_LEVEL_REFERENCE_MAX}`
-          : 'No skills found'}
-      </ThemedText>
-
       {radarData.length >= 3 ? (
         <View style={styles.chartContainer}>
           <RadarChart data={radarData} />
