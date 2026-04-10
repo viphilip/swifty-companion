@@ -1,0 +1,13 @@
+{
+  "login": "viphilip",
+  "id": 159968,
+  "email": "viphilip@student.42.fr",
+  "wallet": 247,
+  "location": null,
+  "main_cursus": "42cursus",
+  "main_level": 13.2,
+  "skills_count": 10,
+  "projects_count": 77,
+  "fetched_at": "2026-04-09T12:58:30.412Z",
+  "source": "/v2/users/viphilip"
+}

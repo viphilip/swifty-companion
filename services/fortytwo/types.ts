@@ -28,9 +28,12 @@ export interface FortyTwoCursus {
   id: number;
   name: string;
   slug: string;
+  kind?: string;
 }
 
 export interface FortyTwoCursusUser {
+  begin_at?: string | null;
+  end_at?: string | null;
   grade: string | null;
   level: number;
   skills: FortyTwoSkill[];
@@ -47,10 +50,14 @@ export interface FortyTwoProject {
 
 export interface FortyTwoProjectUser {
   id: number;
+  occurrence?: number;
   final_mark: number | null;
   status: string;
+  'validated?'?: boolean | null;
   validated?: boolean | null;
   current_team_id?: number | null;
+  marked_at?: string | null;
+  updated_at?: string;
   project: FortyTwoProject;
   cursus_ids: number[];
 }
