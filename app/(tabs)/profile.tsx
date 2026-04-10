@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RadarChart, type RadarDataPoint } from '@/components/charts/radar-chart';
+import { ProfileHeaderSection } from '@/components/profile/profile-header-section';
 import { ThemedText } from '@/components/themed-text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
@@ -49,6 +49,8 @@ interface ProjectGroup {
   };
   projects: ProjectItem[];
 }
+
+const SKILL_LEVEL_REFERENCE_MAX = 21;
 
 function mapErrorToMessage(error: unknown) {
   if (error instanceof FortyTwoApiError) {
@@ -117,12 +119,11 @@ function getValidatedFlag(project: FortyTwoProjectUser) {
 
 function buildRadarData(skills: FortyTwoSkill[]): RadarDataPoint[] {
   const sortedSkills = [...skills].sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
-  const maxLevel = sortedSkills.reduce((max, skill) => Math.max(max, skill.level), 0);
 
   return sortedSkills.map((skill) => ({
     label: skill.name,
     value: skill.level,
-    percent: maxLevel > 0 ? (skill.level / maxLevel) * 100 : 0,
+    percent: Math.min(100, Math.max(0, (skill.level / SKILL_LEVEL_REFERENCE_MAX) * 100)),
   }));
 }
 
@@ -282,7 +283,7 @@ export default function ProfileScreen() {
           <View style={[g.glassCard, styles.emptyStateCard]}>
             <ThemedText type="subtitle">Aucun profil selectionne</ThemedText>
             <ThemedText style={{ color: palette.textSecondary }}>
-              Fais une recherche dans l&apos;onglet Home puis clique sur la preview
+              Fais une recherche dans l&apos;onglet Search puis clique sur la preview
             </ThemedText>
           </View>
         </View>
@@ -316,61 +317,20 @@ export default function ProfileScreen() {
     );
   }
 
-  const avatarUrl = user.image?.versions?.large ?? user.image?.link ?? null;
-
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.background }]} edges={['top']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}>
-        <View style={[g.glassCardElevated, styles.headerCard]}>
-          <View style={styles.identityRow}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} contentFit="cover" style={styles.avatar} transition={140} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback]}>
-                <ThemedText type="subtitle">{user.login.slice(0, 1).toUpperCase()}</ThemedText>
-              </View>
-            )}
-
-            <View style={styles.identityTextBlock}>
-              <ThemedText type="title" style={styles.loginTitle}>
-                {user.login}
-              </ThemedText>
-              <ThemedText style={{ color: palette.textSecondary }}>{user.email}</ThemedText>
-              <ThemedText style={{ color: palette.textSecondary }}>
-                Cursus principal: {mainCursus?.name ?? 'Unknown'}
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.metaGrid}>
-            <View style={[styles.metaChip, g.subtleBorder]}>
-              <ThemedText style={styles.metaLabel}>wallet</ThemedText>
-              <ThemedText type="defaultSemiBold">{user.wallet} ₳</ThemedText>
-            </View>
-            <View style={[styles.metaChip, g.subtleBorder]}>
-              <ThemedText style={styles.metaLabel}>level</ThemedText>
-              <ThemedText type="defaultSemiBold">
-                {typeof mainCursus?.level === 'number' ? mainCursus.level.toFixed(2) : 'N/A'}
-              </ThemedText>
-            </View>
-            <View style={[styles.metaChip, g.subtleBorder]}>
-              <ThemedText style={styles.metaLabel}>location</ThemedText>
-              <ThemedText type="defaultSemiBold">{user.location ?? 'Unavailable'}</ThemedText>
-            </View>
-            <View style={[styles.metaChip, g.subtleBorder]}>
-              <ThemedText style={styles.metaLabel}>correction pts</ThemedText>
-              <ThemedText type="defaultSemiBold">{user.correction_point}</ThemedText>
-            </View>
-          </View>
-        </View>
+        <ProfileHeaderSection user={user} mainCursusLevel={mainCursus?.level} />
 
         <View style={[g.glassCard, styles.sectionCard]}>
-          <ThemedText type="subtitle">Skills radar</ThemedText>
+          <ThemedText type="subtitle">Skills</ThemedText>
           <ThemedText style={{ color: palette.textSecondary }}>
-            {mainCursus ? `${mainCursus.name} - ${radarData.length} skills` : 'No skills found'}
+            {mainCursus
+              ? `${mainCursus.name} - ${radarData.length} skills - max ref lv ${SKILL_LEVEL_REFERENCE_MAX}`
+              : 'No skills found'}
           </ThemedText>
 
           {radarData.length >= 3 ? (
@@ -380,7 +340,7 @@ export default function ProfileScreen() {
           ) : (
             <View style={styles.emptyCard}>
               <ThemedText style={{ color: palette.textSecondary }}>
-                Pas assez de skills pour afficher un radar
+                Not enough skills to display a radar
               </ThemedText>
             </View>
           )}
@@ -503,49 +463,6 @@ const styles = StyleSheet.create({
   },
   emptyStateCard: {
     gap: Spacing.sm,
-  },
-  headerCard: {
-    gap: Spacing.md,
-  },
-  identityRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    alignItems: 'center',
-  },
-  identityTextBlock: {
-    flex: 1,
-    gap: 4,
-  },
-  loginTitle: {
-    fontSize: 30,
-    lineHeight: 34,
-  },
-  avatar: {
-    width: 86,
-    height: 86,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(125, 211, 252, 0.22)',
-  },
-  avatarFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  metaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  metaChip: {
-    minWidth: '47%',
-    flex: 1,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: 2,
-  },
-  metaLabel: {
-    opacity: 0.72,
   },
   sectionCard: {
     gap: Spacing.md,
