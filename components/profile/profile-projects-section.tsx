@@ -45,6 +45,11 @@ interface ProfileProjectsSectionProps {
   mainCursusId?: number | null;
 }
 
+/**
+ * Build a map of cursus IDs to cursus metadata.
+ * @param cursusUsers - The list of cursus users to build the map from.
+ * @returns A map of cursus IDs to cursus metadata.
+ */
 function buildCursusMetaMap(cursusUsers: FortyTwoCursusUser[]) {
   const cursusMap = new Map<number, CursusMeta>();
 
@@ -94,6 +99,13 @@ function getProjectStatusLabel(resolvedStatus: string) {
   return resolvedStatus.replace('_', ' ');
 }
 
+/**
+ * Build a list of project groups by cursus.
+ * @param projects - The list of projects to build the groups from.
+ * @param cursusMap - A map of cursus IDs to cursus metadata.
+ * @param mainCursusId - The ID of the main cursus.
+ * @returns A list of project groups by cursus.
+ */
 function buildProjectGroups(
   projects: FortyTwoProjectUser[],
   cursusMap: Map<number, CursusMeta>,
@@ -225,9 +237,6 @@ export function ProfileProjectsSection({
                 />
                 <View>
                   <ThemedText type="defaultSemiBold">{group.cursusName}</ThemedText>
-                  <ThemedText style={{ color: palette.textSecondary }}>
-                    id {group.cursusId} - {group.cursusKind ?? 'unknown'}
-                  </ThemedText>
                 </View>
               </View>
               <View style={[styles.counterBadge, { borderColor: palette.borderGlassStrong }]}>
