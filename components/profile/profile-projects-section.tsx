@@ -20,6 +20,7 @@ interface ProjectItem {
   id: number;
   name: string;
   status: string;
+  resolvedStatus: string;
   validated: boolean | null;
   finalMark: number | null;
   updatedAt: string | null;
@@ -44,6 +45,11 @@ interface ProfileProjectsSectionProps {
   mainCursusId?: number | null;
 }
 
+/**
+ * Build a map of cursus IDs to cursus metadata.
+ * @param cursusUsers - The list of cursus users to build the map from.
+ * @returns A map of cursus IDs to cursus metadata.
+ */
 function buildCursusMetaMap(cursusUsers: FortyTwoCursusUser[]) {
   const cursusMap = new Map<number, CursusMeta>();
 
@@ -80,14 +86,26 @@ function getValidatedFlag(project: FortyTwoProjectUser) {
   return null;
 }
 
-function getProjectStatusLabel(status: string, validated: boolean | null) {
-  if (status === 'in_progress') return 'in progress';
-  if (status === 'finished' && validated === false) return 'failed';
-  if (status === 'finished' && validated === true) return 'validated';
+function resolveProjectStatus(status: string, validated: boolean | null) {
+  if (validated === true) return 'validated';
+  if (validated === false) return 'failed';
+  if (status === 'in_progress') return 'in_progress';
   if (status === 'finished') return 'finished';
-  return status.replace('_', ' ');
+  return status;
 }
 
+function getProjectStatusLabel(resolvedStatus: string) {
+  if (resolvedStatus === 'in_progress') return 'in progress';
+  return resolvedStatus.replace('_', ' ');
+}
+
+/**
+ * Build a list of project groups by cursus.
+ * @param projects - The list of projects to build the groups from.
+ * @param cursusMap - A map of cursus IDs to cursus metadata.
+ * @param mainCursusId - The ID of the main cursus.
+ * @returns A list of project groups by cursus.
+ */
 function buildProjectGroups(
   projects: FortyTwoProjectUser[],
   cursusMap: Map<number, CursusMeta>,
@@ -97,6 +115,8 @@ function buildProjectGroups(
 
   for (const project of projects) {
     const validated = getValidatedFlag(project);
+    const status = project.status ?? 'unknown';
+    const resolvedStatus = resolveProjectStatus(status, validated);
     const ids = project.cursus_ids.length > 0 ? project.cursus_ids : [-1];
 
     for (const cursusId of ids) {
@@ -118,14 +138,15 @@ function buildProjectGroups(
 
       const group = groups.get(cursusId)!;
       group.stats.total += 1;
-      if (project.status === 'finished') group.stats.finished += 1;
-      if (project.status === 'in_progress') group.stats.inProgress += 1;
-      if (project.status === 'finished' && validated === false) group.stats.failed += 1;
+      if (resolvedStatus === 'in_progress') group.stats.inProgress += 1;
+      if (resolvedStatus === 'failed') group.stats.failed += 1;
+      if (resolvedStatus === 'finished' || resolvedStatus === 'validated') group.stats.finished += 1;
 
       group.projects.push({
         id: project.id,
         name: project.project?.name ?? 'Untitled project',
-        status: project.status ?? 'unknown',
+        status,
+        resolvedStatus,
         validated,
         finalMark: project.final_mark,
         updatedAt: project.updated_at ?? null,
@@ -133,15 +154,16 @@ function buildProjectGroups(
     }
   }
 
-  const statusRank = (status: string) => {
-    if (status === 'in_progress') return 0;
-    if (status === 'finished') return 1;
-    return 2;
+  const statusRank = (resolvedStatus: string) => {
+    if (resolvedStatus === 'in_progress') return 0;
+    if (resolvedStatus === 'failed') return 1;
+    if (resolvedStatus === 'validated' || resolvedStatus === 'finished') return 2;
+    return 3;
   };
 
   for (const group of groups.values()) {
     group.projects.sort((a, b) => {
-      const byStatus = statusRank(a.status) - statusRank(b.status);
+      const byStatus = statusRank(a.resolvedStatus) - statusRank(b.resolvedStatus);
       if (byStatus !== 0) return byStatus;
 
       const aUpdated = a.updatedAt ? Date.parse(a.updatedAt) : 0;
@@ -193,7 +215,7 @@ export function ProfileProjectsSection({
 
   return (
     <View style={styles.projectsSection}>
-      <ThemedText type="subtitle">Projects by cursus</ThemedText>
+      <ThemedText type="subtitle">Projects</ThemedText>
 
       {projectGroups.map((group) => {
         const groupKey = String(group.cursusId);
@@ -215,9 +237,6 @@ export function ProfileProjectsSection({
                 />
                 <View>
                   <ThemedText type="defaultSemiBold">{group.cursusName}</ThemedText>
-                  <ThemedText style={{ color: palette.textSecondary }}>
-                    id {group.cursusId} - {group.cursusKind ?? 'unknown'}
-                  </ThemedText>
                 </View>
               </View>
               <View style={[styles.counterBadge, { borderColor: palette.borderGlassStrong }]}>
@@ -240,13 +259,11 @@ export function ProfileProjectsSection({
             {isOpen ? (
               <View style={styles.projectRows}>
                 {group.projects.map((project) => {
-                  const isFailed = project.status === 'finished' && project.validated === false;
-                  const isValidated = project.status === 'finished' && project.validated === true;
-                  const tone = isFailed
+                  const tone = project.resolvedStatus === 'failed'
                     ? { backgroundColor: 'rgba(220, 38, 38, 0.12)', textColor: '#b91c1c' }
-                    : isValidated
+                    : project.resolvedStatus === 'validated'
                       ? { backgroundColor: 'rgba(22, 163, 74, 0.14)', textColor: '#166534' }
-                      : project.status === 'in_progress'
+                      : project.resolvedStatus === 'in_progress'
                         ? { backgroundColor: 'rgba(37, 99, 235, 0.12)', textColor: '#1d4ed8' }
                         : { backgroundColor: 'rgba(148, 163, 184, 0.14)', textColor: '#475569' };
 
@@ -256,7 +273,7 @@ export function ProfileProjectsSection({
                         <ThemedText type="defaultSemiBold">{project.name}</ThemedText>
                         <View style={[styles.statusPill, { backgroundColor: tone.backgroundColor }]}>
                           <ThemedText style={[styles.statusText, { color: tone.textColor }]}>
-                            {getProjectStatusLabel(project.status, project.validated)}
+                            {getProjectStatusLabel(project.resolvedStatus)}
                           </ThemedText>
                         </View>
                       </View>
