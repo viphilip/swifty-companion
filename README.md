@@ -17,8 +17,18 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 2. Start the app
 
    ```bash
-   npx expo start
+   npx expo start -c
    ```
+
+### Correction 42 (Fedora)
+
+Le LAN est bloqué sur les PC de l’école. Lancer avec un tunnel, puis scanner le QR dans Expo Go :
+
+```bash
+npx expo start --tunnel
+```
+
+Équivalent Bun : `bunx expo start --tunnel`. Si Expo demande `@expo/ngrok` : `npx expo install @expo/ngrok`, puis relancer. PC et téléphone doivent avoir Internet.
 
 In the output, you'll find options to open the app in a
 
