@@ -3,6 +3,7 @@
 Ce document explique comment fonctionne l'integration 42 API actuelle, comment l'etendre proprement, et comment la debugger rapidement.
 
 References:
+
 - Guide 42: [Getting started](https://api.intra.42.fr/apidoc/guides/getting_started)
 - Index API: [API doc](https://api.intra.42.fr/apidoc)
 
@@ -15,6 +16,8 @@ Cette couche de services a ete creee pour garantir 4 contraintes du sujet:
 3. Garder les ecrans UI simples et types.
 4. Normaliser les erreurs pour afficher les bons messages.
 
+
+
 ## 2) Cartographie des fichiers
 
 - `services/oauth.ts`
@@ -24,13 +27,17 @@ Cette couche de services a ete creee pour garantir 4 contraintes du sujet:
 - `services/fortytwo/client.ts`
   - Wrapper fetch authentifie generique (`apiFetch<T>`).
 - `services/fortytwo/users.ts`
-  - Endpoint metier utilisateur (`getUserByLogin`).
+  - Endpoint metier utilisateur (`getUserByLogin`).                                 
 - `services/fortytwo/types.ts`
   - Types TypeScript des payloads 42.
 - `services/fortytwo/errors.ts`
   - Erreur applicative partagee (`FortyTwoApiError`).
 
+
+
 ## 3) Flux d'execution (de bout en bout)
+
+
 
 ### Flux de recherche (`getUserByLogin`)
 
@@ -38,8 +45,8 @@ Cette couche de services a ete creee pour garantir 4 contraintes du sujet:
 2. `users.ts` normalise l'input (`trim().toLowerCase()`), puis construit `/v2/users/{login}`.
 3. `client.ts` appelle `getValidAccessToken()` avant la requete HTTP.
 4. `auth.ts`:
-   - renvoie le token en cache s'il est encore valide,
-   - sinon demande un nouveau token via `POST /oauth/token` avec `grant_type=client_credentials`.
+  - renvoie le token en cache s'il est encore valide,
+  - sinon demande un nouveau token via `POST /oauth/token` avec `grant_type=client_credentials`.
 5. `client.ts` envoie la requete avec `Authorization: Bearer <token>`.
 6. Si la reponse est `401`, le cache token est invalide et la requete est retentee une seule fois.
 7. Si la reponse est `404` sur l'endpoint user, `users.ts` convertit en `USER_NOT_FOUND`.
@@ -73,6 +80,8 @@ Point important:
 - Les variables `EXPO_PUBLIC_*` sont bundlees cote client par Expo, donc non secretes en production.
 - Pour ce projet ecole c'est souvent accepte si les fichiers `.env*` ne sont jamais pushes. En production reelle, preferer un backend proxy.
 
+
+
 ## 6) Contrat d'erreurs
 
 Toutes les erreurs metier doivent etre des `FortyTwoApiError` avec `code`:
@@ -92,6 +101,8 @@ Toutes les erreurs metier doivent etre des `FortyTwoApiError` avec `code`:
 - `API_ERROR`
   - Erreur API generique, status non-OK, payload invalide.
   - Action UI: message generique.
+
+
 
 ## 7) Consommation depuis l'UI
 
@@ -124,6 +135,8 @@ async function search(login: string) {
 }
 ```
 
+
+
 ## 8) Ajouter un nouvel endpoint proprement
 
 Exemple: ajouter "liste des cursus".
@@ -146,6 +159,8 @@ export async function getCursus(): Promise<FortyTwoCursus[]> {
 }
 ```
 
+
+
 ## 9) Regles de maintenance (conventions equipe)
 
 1. Pas de `fetch('https://api.intra.42.fr/...')` direct dans les ecrans.
@@ -154,6 +169,8 @@ export async function getCursus(): Promise<FortyTwoCursus[]> {
 4. Mapper les statuses attendus vers des erreurs metier explicites.
 5. Mettre les types a jour avant la logique fonctionnelle.
 6. Garder `services/oauth.ts` comme facade d'import unique pour l'UI.
+
+
 
 ## 10) Checklist de test manuel
 
@@ -170,6 +187,8 @@ export async function getCursus(): Promise<FortyTwoCursus[]> {
 - Retry unauthorized
   - Simuler un token invalide si possible et verifier un seul retry apres `401`.
 
+
+
 ## 11) Limites connues et ameliorations futures
 
 Limites actuelles:
@@ -185,3 +204,4 @@ Ameliorations possibles:
 3. Ajouter logger centralise pour erreurs API.
 4. Persister certaines metadonnees token pour un meilleur UX.
 5. Deplacer l'echange OAuth sur un backend proxy en prod.
+
